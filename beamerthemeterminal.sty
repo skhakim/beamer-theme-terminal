@@ -1,0 +1,208 @@
+% ============================================================
+%  beamerthemeterminal.sty
+%  A retro, monospaced, black-and-white Beamer theme.
+%
+%  Version 1.0 (2026/10/02)
+%  Copyright (c) 2026 [Your Name]
+%  Released under the MIT License (see LICENSE).
+%
+%  Requires XeLaTeX or LuaLaTeX (fontspec).
+%  Usage:   \usetheme{terminal}
+%           \usetheme[nosectionpages,noprogressbar]{terminal}
+% ============================================================
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{beamerthemeterminal}[2026/10/02 v1.0 Retro terminal Beamer theme]
+
+\RequirePackage{iftex}
+\ifTUTeX\else
+  \PackageError{beamerthemeterminal}
+    {This theme needs XeLaTeX or LuaLaTeX}
+    {On Overleaf: Menu > Settings > Compiler > XeLaTeX.\MessageBreak
+     Locally: run xelatex instead of pdflatex.}
+\fi
+
+% ---------- options ----------
+\newif\ifterminal@sectionpages \terminal@sectionpagestrue
+\newif\ifterminal@progressbar  \terminal@progressbartrue
+\DeclareOptionBeamer{nosectionpages}{\terminal@sectionpagesfalse}
+\DeclareOptionBeamer{noprogressbar}{\terminal@progressbarfalse}
+\ProcessOptionsBeamer
+
+\mode<presentation>
+
+\RequirePackage{fontspec}
+\RequirePackage{tikz}
+\usetikzlibrary{calc}
+\RequirePackage{tcolorbox}
+\tcbuselibrary{skins}
+
+% ---------- fonts: IBM Plex Mono, falling back to Latin Modern Mono ----------
+\usefonttheme{professionalfonts}  % keep Computer Modern for math
+\IfFontExistsTF{IBM Plex Mono}{%
+  \setsansfont{IBM Plex Mono}[Scale=0.9]
+  \setmonofont{IBM Plex Mono}[Scale=0.9]
+}{%
+  \IfFileExists{IBMPlexMono-Regular.otf}{%
+    \setsansfont{IBMPlexMono}[Extension=.otf,UprightFont=*-Regular,BoldFont=*-Bold,
+      ItalicFont=*-Italic,BoldItalicFont=*-BoldItalic,Scale=0.9]
+    \setmonofont{IBMPlexMono}[Extension=.otf,UprightFont=*-Regular,BoldFont=*-Bold,
+      ItalicFont=*-Italic,BoldItalicFont=*-BoldItalic,Scale=0.9]
+  }{%
+    \PackageWarningNoLine{beamerthemeterminal}
+      {IBM Plex Mono not found, falling back to Latin Modern Mono}%
+    \setsansfont{lmmono10-regular.otf}[BoldFont=lmmonolt10-bold.otf,
+      ItalicFont=lmmono10-italic.otf]
+    \setmonofont{lmmono10-regular.otf}[BoldFont=lmmonolt10-bold.otf,
+      ItalicFont=lmmono10-italic.otf]
+  }%
+}
+
+% ---------- user-facing settings ----------
+% text before the short title in the footline, e.g. \terminalfootprefix{mytool}
+\def\terminal@footprefix{}
+\newcommand{\terminalfootprefix}[1]{\def\terminal@footprefix{#1}}
+% label in the title-page window bar
+\def\terminal@window{talk.tex}
+\newcommand{\terminalwindow}[1]{\def\terminal@window{#1}}
+% fake shell lines on the title page (any content; use \\ between lines)
+\long\def\terminal@shell{}
+\newcommand{\terminalshell}[1]{\long\def\terminal@shell{#1}}
+
+% ---------- small helpers ----------
+\providecommand{\twod}[1]{\ifnum#1<10 0\fi\number#1}
+\newcommand{\terminalcursor}{\rule[-0.2ex]{0.55em}{1.05em}}
+\providecommand{\cursor}{\terminalcursor}
+
+% ---------- black & white colours ----------
+\setbeamertemplate{navigation symbols}{}
+\setbeamercolor{normal text}{fg=black,bg=white}
+\setbeamercolor{structure}{fg=black}
+\setbeamercolor{alerted text}{fg=black}
+\setbeamerfont{alerted text}{series=\bfseries}
+\setbeamercolor{frametitle}{fg=white,bg=black}
+\setbeamerfont{frametitle}{size=\large,series=\bfseries}
+\setbeamercolor{block title}{fg=white,bg=black}
+\setbeamercolor{block body}{fg=black,bg=white}
+
+% ---------- lists ----------
+\setbeamertemplate{itemize item}{\textbf{>}}
+\setbeamertemplate{itemize subitem}{\textbf{-}}
+\setbeamertemplate{itemize subsubitem}{\textbf{.}}
+\setbeamertemplate{enumerate item}{[\insertenumlabel]}
+\setbeamertemplate{enumerate subitem}{[\insertsubenumlabel]}
+\setlength{\leftmargini}{1.4em}
+
+% ---------- frame title: inverse bar with cursor and section number ----------
+\setbeamertemplate{frametitle}{%
+  \nointerlineskip
+  \begin{beamercolorbox}[wd=\paperwidth,ht=3.1ex,dp=1.3ex,leftskip=1.2em,rightskip=1.2em]{frametitle}%
+    \usebeamerfont{frametitle}\MakeUppercase{\insertframetitle}\,\terminalcursor
+    \hfill{\normalfont\footnotesize [\,\twod{\value{section}}\,]}%
+  \end{beamercolorbox}%
+  \vskip1.5pt\hrule height 0.6pt\vskip6pt
+}
+
+% ---------- footline: label, block progress bar, frame counter ----------
+\newcommand{\terminalprogressbar}{%
+  \begin{tikzpicture}[baseline=-0.6ex]
+    \pgfmathsetmacro{\terminal@pr}{\insertframenumber/max(\inserttotalframenumber,1)}
+    \foreach \i in {0,...,29}{%
+      \pgfmathparse{((\i+0.5)/30 < \terminal@pr) ? 1 : 0}
+      \ifnum\pgfmathresult=1
+        \fill (\i*0.11,-0.06) rectangle ++(0.08,0.12);
+      \else
+        \draw[line width=0.3pt] (\i*0.11,-0.06) rectangle ++(0.08,0.12);
+      \fi}
+  \end{tikzpicture}}
+
+\setbeamertemplate{footline}{%
+  \leavevmode\hbox to\paperwidth{%
+    \hskip1.2em{\tiny\ifx\terminal@footprefix\@empty\else\terminal@footprefix\ ::\ \fi\insertshorttitle}\hfill
+    \ifterminal@progressbar\terminalprogressbar\hskip0.8em\fi
+    {\tiny[\,\twod{\insertframenumber}/\twod{\inserttotalframenumber}\,]}\hskip1.2em}%
+  \vskip5pt}
+
+% ---------- title page: a retro window ----------
+\setbeamertemplate{title page}{%
+  \vfill
+  \begin{tcolorbox}[enhanced, sharp corners, colback=white, colframe=black, boxrule=1pt,
+    shadow={3pt}{-3pt}{0pt}{fill=black}, left=12pt, right=12pt, top=10pt, bottom=10pt,
+    title={\hspace{-4pt}\rule{0.6em}{0.6em}\ \rule{0.6em}{0.6em}\ \rule{0.6em}{0.6em}%
+           \hfill\terminal@window\hfill\phantom{\rule{2.6em}{0.6em}}},
+    coltitle=white, colbacktitle=black, fonttitle=\footnotesize\bfseries,
+    toptitle=2pt, bottomtitle=2pt, before upper=\raggedright]
+    {\Large\bfseries\MakeUppercase{\inserttitle}\par}%
+    \ifx\beamer@subtitle\@empty\else\vskip8pt{\small\insertsubtitle\par}\fi
+    \ifx\terminal@shell\@empty\else
+      \vskip14pt{\footnotesize\terminal@shell\ \terminalcursor\par}%
+    \fi
+  \end{tcolorbox}
+  \vskip14pt
+  {\small\raggedright\insertauthor
+    \ifx\beamer@institute\@empty\else\quad//\quad\insertinstitute\fi
+    \ifx\beamer@date\@empty\else\quad//\quad\insertdate\fi\par}%
+  \vfill
+}
+
+% ---------- full-screen inverse "terminal screen" frames ----------
+% \terminalscreen{prompt line}{big text}{small line below}
+\newcommand{\terminalscreen}[3]{%
+  {\setbeamercolor{background canvas}{bg=black}
+   \begin{frame}[plain,noframenumbering]
+     \vfill
+     \color{white}
+     {\small #1}\par\vskip10pt
+     {\fontsize{34}{40}\selectfont\bfseries #2\,\terminalcursor}\par\vskip14pt
+     {\small #3}
+     \vfill
+   \end{frame}}}
+
+% section screens: white on black
+\ifterminal@sectionpages
+\AtBeginSection[]{%
+  {\setbeamercolor{background canvas}{bg=black}
+   \begin{frame}[plain,noframenumbering]
+     \vfill
+     \color{white}
+     {\small > cd section\_\twod{\value{section}}}\par\vskip10pt
+     {\fontsize{40}{44}\selectfont\bfseries \twod{\value{section}}}\par\vskip6pt
+     {\LARGE\bfseries \insertsectionhead\,\terminalcursor}\par
+     \vfill
+   \end{frame}}}
+\fi
+
+% ---------- boxes ----------
+% \begin{tbox}[tcolorbox options]{window title} ... \end{tbox}
+\newtcolorbox{tbox}[2][]{enhanced, sharp corners, colback=white, colframe=black,
+  boxrule=0.8pt, coltitle=white, colbacktitle=black, fonttitle=\bfseries\small,
+  title={#2}, left=5pt, right=5pt, top=4pt, bottom=4pt, boxsep=0pt,
+  toptitle=1pt, bottomtitle=1pt,
+  shadow={2.2pt}{-2.2pt}{0pt}{fill=black}, before upper=\raggedright, #1}
+% \begin{pbox}[options] ... \end{pbox}: untitled panel
+\newtcolorbox{pbox}[1][]{enhanced, sharp corners, colback=white, colframe=black,
+  boxrule=0.8pt, left=5pt, right=5pt, top=4pt, bottom=4pt, boxsep=0pt,
+  shadow={2.2pt}{-2.2pt}{0pt}{fill=black}, before upper=\raggedright, #1}
+% \begin{ibox}[options] ... \end{ibox}: inverse-video banner
+\newtcolorbox{ibox}[1][]{enhanced, sharp corners, colback=black, colframe=black,
+  coltext=white, boxrule=0.8pt, left=6pt, right=6pt, top=4pt, bottom=4pt, boxsep=0pt,
+  fontupper=\bfseries, halign=center, #1}
+
+% Beamer's own block environments in the same style
+\setbeamertemplate{blocks}[default]
+\setbeamertemplate{block begin}{%
+  \par\vskip\medskipamount
+  \begin{tcolorbox}[enhanced, sharp corners, colback=white, colframe=black,
+    boxrule=0.8pt, coltitle=white, colbacktitle=black, fonttitle=\bfseries\small,
+    title={\insertblocktitle}, left=5pt, right=5pt, top=4pt, bottom=4pt, boxsep=0pt,
+    toptitle=1pt, bottomtitle=1pt, shadow={2.2pt}{-2.2pt}{0pt}{fill=black},
+    before upper=\raggedright]}
+\setbeamertemplate{block end}{\end{tcolorbox}\par\vskip\smallskipamount}
+
+% ---------- inline helpers ----------
+% \inv{text}: inverse video
+\newcommand{\inv}[1]{\tikz[baseline=(X.base)]\node[fill=black,text=white,inner sep=1.6pt,font=\bfseries](X){\strut #1};}
+% \src{citation}: tiny source line at the bottom right of a frame
+\newcommand{\src}[1]{\par\vfill\hfill{\tiny[#1]}}
+
+\mode<all>
+\endinput
