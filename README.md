@@ -78,3 +78,7 @@ Section numbers appear in the frame title as `[01]`. For backup slides that don'
 ## License
 
 [MIT](LICENSE). IBM Plex Mono is not included in this repository; it is distributed separately under the SIL Open Font License.
+
+## Credits
+
+This theme was designed and written in collaboration with Claude, an AI assistant made by Anthropic. It grew out of an academic presentation: Claude drafted the original slide styling and later packaged it into this standalone theme, demo, and documentation, while skhakim shaped the design, tested it, and maintains the repository. Bug reports and improvements are welcome, from humans and machines alike.
